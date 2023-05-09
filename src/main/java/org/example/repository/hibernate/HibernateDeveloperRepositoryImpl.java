@@ -1,21 +1,19 @@
 package org.example.repository.hibernate;
 
 import org.example.model.Developer;
-import org.example.model.Status;
 import org.example.repository.DeveloperRepository;
 import org.example.utility.HibernateUtils;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 
 import java.util.List;
 
 public class HibernateDeveloperRepositoryImpl implements DeveloperRepository {
-    private final SessionFactory SESSION_FACTORY = HibernateUtils.getSessionFactory();
 
     @Override
     public Developer save(Developer developer) {
-        try (Session session = SESSION_FACTORY.getCurrentSession()) {
+        try (Session session = HibernateUtils.getSession()) {
             session.beginTransaction();
             session.persist(developer);
             session.getTransaction().commit();
@@ -26,11 +24,12 @@ public class HibernateDeveloperRepositoryImpl implements DeveloperRepository {
 
     @Override
     public Developer update(Developer developer) {
-        try (Session session = SESSION_FACTORY.getCurrentSession()) {
+        try (Session session = HibernateUtils.getSession()) {
             session.beginTransaction();
             session.merge(developer);
             session.getTransaction().commit();
         }
+
         return developer;
     }
 
@@ -38,46 +37,44 @@ public class HibernateDeveloperRepositoryImpl implements DeveloperRepository {
     public List<Developer> getAll() {
         List<Developer> developers;
         String hql = "from Developer where status like 'ACTIVE'";
-        try (Session session = SESSION_FACTORY.getCurrentSession()) {
-            session.beginTransaction();
+        try (Session session = HibernateUtils.getSession()) {
             developers = session.createQuery(hql, Developer.class).getResultList();
-            session.getTransaction().commit();
         }
+
         return developers;
     }
 
     @Override
     public Developer getById(Integer integer) {
-        return getByIdInternal(integer);
+        Developer developer;
+        String hql = "from Developer where id = :id and status like 'ACTIVE'";
+        try (Session session = HibernateUtils.getSession()) {
+            Query<Developer> query = session.createQuery(hql, Developer.class);
+            query.setParameter("id", integer);
+            developer = query.getSingleResultOrNull();
+        }
+
+        return developer;
     }
 
     @Override
     public boolean deleteById(Integer integer) {
-        Developer developer = getByIdInternal(integer);
-        if (developer != null) {
-            try (Session session = SESSION_FACTORY.getCurrentSession()) {
-                session.beginTransaction();
-                developer.setStatus(Status.DELETED);
-                developer.setSpecialty(null);
-                developer.setSkills(null);
-                session.merge(developer);
-                session.getTransaction().commit();
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private Developer getByIdInternal(Integer integer) {
-        Developer developer;
-        String hql = "from Developer where id = :id and status like 'ACTIVE'";
-        try (Session session = SESSION_FACTORY.getCurrentSession()) {
+        String hql = "update Developer set status = 'DELETED', specialty = null where id = :id and status like 'ACTIVE'";
+        try(Session session = HibernateUtils.getSession()){
             session.beginTransaction();
-            Query<Developer> query = session.createQuery(hql, Developer.class);
+            Query query = session.createQuery(hql);
             query.setParameter("id", integer);
-            developer = query.getSingleResultOrNull();
+            int status = query.executeUpdate();
+            if(status > 0){
+                String sql = "delete from skill_set where developer_id = ?";
+                NativeQuery query1 = session.createNativeQuery(sql);
+                query1.setParameter(1, integer);
+                query1.executeUpdate();
+                return true;
+            }
             session.getTransaction().commit();
         }
-        return developer;
+
+        return false;
     }
 }

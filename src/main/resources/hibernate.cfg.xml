@@ -14,5 +14,6 @@
         <property name="show_sql">false</property>
         <property name="hibernate.format_sql">false</property>
         <property name="hibernate.current_session_context_class">thread</property>
+        <property name="hbm2ddl.auto">validate</property>
     </session-factory>
 </hibernate-configuration>

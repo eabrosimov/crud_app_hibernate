@@ -3,13 +3,14 @@ package org.example.utility;
 import org.example.model.Developer;
 import org.example.model.Skill;
 import org.example.model.Specialty;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 public class HibernateUtils {
     private static SessionFactory sessionFactory;
 
-    public static SessionFactory getSessionFactory() {
+    private static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
             sessionFactory = new Configuration()
                     .configure()
@@ -19,6 +20,10 @@ public class HibernateUtils {
                     .buildSessionFactory();
         }
         return sessionFactory;
+    }
+
+    public static Session getSession(){
+        return getSessionFactory().openSession();
     }
 
     public static void closeSessionFactory() {

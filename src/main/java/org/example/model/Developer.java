@@ -20,10 +20,11 @@ public class Developer {
     @Column(name = "last_name", length = 25, nullable = false)
     private String lastName;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "skill_set",
             joinColumns = @JoinColumn(name = "developer_id"),
             inverseJoinColumns = @JoinColumn(name = "skill_id"))
+
     private List<Skill> skills;
 
     @ManyToOne
