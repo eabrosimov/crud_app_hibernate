@@ -36,7 +36,7 @@ public class HibernateDeveloperRepositoryImpl implements DeveloperRepository {
     @Override
     public List<Developer> getAll() {
         List<Developer> developers;
-        String hql = "from Developer where status like 'ACTIVE'";
+        String hql = "from Developer d left join fetch d.skills where d.status like 'ACTIVE'";
         try (Session session = HibernateUtils.getSession()) {
             developers = session.createQuery(hql, Developer.class).getResultList();
         }
@@ -47,7 +47,7 @@ public class HibernateDeveloperRepositoryImpl implements DeveloperRepository {
     @Override
     public Developer getById(Integer integer) {
         Developer developer;
-        String hql = "from Developer where id = :id and status like 'ACTIVE'";
+        String hql = "from Developer d left join fetch d.skills where d.id = :id and d.status like 'ACTIVE'";
         try (Session session = HibernateUtils.getSession()) {
             Query<Developer> query = session.createQuery(hql, Developer.class);
             query.setParameter("id", integer);
